@@ -1,0 +1,100 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>  
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>    
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <Version>12.2.6.1</Version>
+    <AssemblyName>WpfCameraBarcodeReaderDemo</AssemblyName>
+    <RootNamespace>WpfCameraBarcodeReaderDemo</RootNamespace>
+    <StartupObject>WpfCameraBarcodeReaderDemo.App</StartupObject>
+    <ApplicationIcon>App.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>NETCORE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>NETCORE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  
+
+  <ItemGroup>
+    <PackageReference Include="Vintasoft.Barcode" Version="14.1.11.1" />
+    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="14.1.11.1" />
+    <PackageReference Include="Vintasoft.Imaging" Version="12.2.6.1" />
+    <PackageReference Include="Vintasoft.Imaging.Gdi" Version="12.2.6.1" />
+    <PackageReference Include="Vintasoft.Imaging.Media" Version="12.2.6.1" />
+    <PackageReference Include="Vintasoft.Imaging.UI" Version="12.2.6.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf" Version="12.2.6.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf.UI" Version="12.2.6.1" />
+    <PackageReference Include="Vintasoft.Shared" Version="4.0.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="WpfDemosCommonCode\WpfAboutBoxBaseWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="WpfDemosCommonCode.Imaging\Codecs\CodecsFileFilters.cs">
+    </Compile>
+    <Compile Include="WpfDemosCommonCode\DemosTools.cs">
+    </Compile>
+    <Compile Include="WpfDemosCommonCode\WpfAboutBoxBaseWindow.xaml.cs">
+      <DependentUpon>WpfAboutBoxBaseWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <AppDesigner Include="Properties\" />
+    <Resource Include="App.ico" />
+    <Resource Include="WpfDemosCommonCode\Resources\VintasoftLogo.png">
+    </Resource>
+  </ItemGroup>
+</Project>

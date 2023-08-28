@@ -1,0 +1,123 @@
+﻿<Window x:Class="WpfCameraBarcodeReaderDemo.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cc="clr-namespace:WpfCameraBarcodeReaderDemo"
+    xmlns:vsui="clr-namespace:Vintasoft.Imaging.Wpf.UI;assembly=Vintasoft.Imaging.Wpf.UI"
+    Title="VintaSoft Camera Barcode Reader Demo" 
+    Height="714" MinHeight="300"
+    Width="900" MinWidth="400"
+    WindowStartupLocation="CenterScreen"
+    Closing="Window_Closing">
+    <Window.Resources>
+        <Style TargetType="Border">
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Gray" />
+        </Style>
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Command="{x:Static cc:MainWindow._aboutCommand}"  Key="F1" />
+    </Window.InputBindings>
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static cc:MainWindow._aboutCommand}" Executed="aboutMenuItem_Click" />
+    </Window.CommandBindings>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Menu Grid.ColumnSpan="2" Grid.Row="0">
+            <MenuItem Header="File">
+                <MenuItem Header="Exit" Name="exitMenuItem" Click="exitMenuItem_Click"/>
+            </MenuItem>
+            <MenuItem Header="Camera">
+                <MenuItem Header="Start" Name="startImageCapturingMenuItem" Click="startImageCapturingButton_Click"/>
+                <MenuItem Header="Stop" Name="stopImageCapturingMenuItem" Click="stopImageCapturingButton_Click"/>
+                <MenuItem Header="Configure..." Name="configureCameraMenuItem" Click="configureCameraButton_Click"/>
+            </MenuItem>
+            <MenuItem Header="Barcode Reader">
+                <MenuItem Header="Start" Name="startBarcodeReadingMenuItem" Click="startBarcodeReadingButton_Click"/>
+                <MenuItem Header="Stop" Name="stopBarcodeReadingMenuItem" Click="stopBarcodeReadingButton_Click"/>
+            </MenuItem>
+            <MenuItem Header="Help">
+                <MenuItem Header="About... (F1)" Name="aboutMenuItem" Click="aboutMenuItem_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <GroupBox Header="Camera Preview" Margin="3" Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="385*" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="29" />
+                    <RowDefinition Height="39" />
+                    <RowDefinition Height="168*" />
+                </Grid.RowDefinitions>
+                <Border Margin="3" Grid.Row="0" Grid.ColumnSpan="3">
+                    <vsui:WpfImageViewer x:Name="imageViewerForCameraPreview" SizeMode="BestFit"/>
+                </Border>
+                <Label Grid.Row="1" Grid.ColumnSpan="3">Camera:</Label>
+                <ComboBox Name="camerasComboBox" Grid.Row="2" Margin="3" Grid.ColumnSpan="2" SelectionChanged="camerasComboBox_SelectionChanged"/>
+                <ComboBox Name="supportedFormatsComboBox" Grid.Row="2" Margin="3" Grid.Column="3" />
+                <Button Name="startImageCapturingButton" Grid.Row="3" Grid.Column="0" Margin="5,3" Click="startImageCapturingButton_Click">Start Image Capturing</Button>
+                <Button Name="stopImageCapturingButton" Grid.Row="3" Grid.Column="1" Margin="5,3" Click="stopImageCapturingButton_Click">Stop Image Capturing</Button>
+                <Button Name="configureCameraButton" Grid.Row="3" Grid.Column="2" Margin="5,3" Click="configureCameraButton_Click">Configure Camera</Button>
+                <TextBox Name="captureDeviceMonitorTextBox" Grid.Row="4" Grid.ColumnSpan="3" IsReadOnly="True" Margin="3" VerticalScrollBarVisibility="Visible" Opacity="1" BorderThickness="1" />
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Header="Captured Image with Barcodes" Grid.Column="1" Margin="3" Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="385*" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="29" />
+                    <RowDefinition Height="39" />
+                    <RowDefinition Height="168*" />
+                </Grid.RowDefinitions>
+                <Border Margin="3" Grid.ColumnSpan="3" Grid.Row="0">
+                    <vsui:WpfImageViewer Name="imageViewerForCapturedImageWithBarcodes" SizeMode="BestFit" />
+                </Border>
+                <Label Grid.Row="1" Grid.ColumnSpan="3">Barcode type:</Label>
+                <ComboBox Name="scanBarcodeTypeComboBox" Grid.Row="2" Margin="3" Grid.ColumnSpan="2" SelectionChanged="scanBarcodeTypeComboBox_SelectionChanged"/>
+                <ComboBox Name="recognitionTypeComboBox" Grid.Row="2" Margin="3" Grid.Column="3" SelectionChanged="recognitionTypeComboBox_SelectionChanged">
+                    <ComboBoxItem>Automatic Recognition</ComboBoxItem>
+                    <ComboBoxItem>Threshold (Auto)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (50)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (100)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (150)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (200)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (250)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (300)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (350)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (400)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (450)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (500)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (550)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (600)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (650)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (700)</ComboBoxItem>
+                    <ComboBoxItem>Threshold (750)</ComboBoxItem>
+                </ComboBox>
+                <Button Name="startBarcodeReadingButton" Grid.Row="3" Grid.Column="0" Margin="5,3" Click="startBarcodeReadingButton_Click">Start Barcode Reading</Button>
+                <Button Name="stopBarcodeReadingButton" Grid.Row="3" Grid.Column="1" Margin="5,3" Click="stopBarcodeReadingButton_Click">Stop Barcode Reading</Button>
+                <Button Name="saveImageAsButton" Grid.Row="3" Grid.Column="3" Margin="5,3" Click="saveImageAsButton_Click" IsEnabled="False">Save Image As...</Button>
+                <TextBox Name="readerResultsTextBox" Grid.Row="4" Grid.ColumnSpan="3" IsReadOnly="True" Margin="3" VerticalScrollBarVisibility="Visible" />
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>
