@@ -9,7 +9,7 @@ This C# project uses <a href="https://www.vintasoft.com/vsimaging-dotnet-index.h
 
 
 ## Screenshot
-<img src="vintasoft-wpf-camera-barcode-reader-demo.png" alt="VintaSoft WPF Camera Barcode Reader Demo">
+<img src="vintasoft-wpf-camera-barcode-reader-demo.png" title="VintaSoft WPF Camera Barcode Reader Demo">
 
 
 ## Usage
