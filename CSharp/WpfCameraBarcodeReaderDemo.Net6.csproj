@@ -32,8 +32,8 @@
   
 
   <ItemGroup>
-    <PackageReference Include="Vintasoft.Barcode" Version="14.1.12.1" />
-    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="14.1.12.1" />
+    <PackageReference Include="Vintasoft.Barcode" Version="14.1.16.1" />
+    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="14.1.16.1" />
     <PackageReference Include="Vintasoft.Imaging" Version="12.2.7.1" />
     <PackageReference Include="Vintasoft.Imaging.Gdi" Version="12.2.7.1" />
     <PackageReference Include="Vintasoft.Imaging.Media" Version="12.2.7.1" />
