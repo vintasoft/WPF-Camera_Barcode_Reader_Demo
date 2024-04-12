@@ -571,7 +571,7 @@ namespace WpfCameraBarcodeReaderDemo
         #region Camera
 
         /// <summary>
-        /// Handles the SelectionChanged event of CamerasComboBox object.
+        /// Handles the SelectionChanged event of camerasComboBox object.
         /// </summary>
         private void camerasComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -887,7 +887,7 @@ namespace WpfCameraBarcodeReaderDemo
         }
 
         /// <summary>
-        /// Handles the Click event of SaveImageAsButton object.
+        /// Handles the Click event of saveImageAsButton object.
         /// </summary>
         private void saveImageAsButton_Click(object sender, RoutedEventArgs e)
         {
