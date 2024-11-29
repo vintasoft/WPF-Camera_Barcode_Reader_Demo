@@ -48,5 +48,5 @@ using System.Windows;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("12.5.10.1")]
-[assembly: AssemblyFileVersion("12.5.10.1")]
+[assembly: AssemblyVersion("12.5.11.1")]
+[assembly: AssemblyFileVersion("12.5.11.1")]
