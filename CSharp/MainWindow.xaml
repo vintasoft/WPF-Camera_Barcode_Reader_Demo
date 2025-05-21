@@ -94,25 +94,7 @@
                 </Border>
                 <Label Grid.Row="1" Grid.ColumnSpan="3">Barcode type:</Label>
                 <ComboBox Name="scanBarcodeTypeComboBox" Grid.Row="2" Margin="3" Grid.ColumnSpan="2" SelectionChanged="scanBarcodeTypeComboBox_SelectionChanged"/>
-                <ComboBox Name="recognitionTypeComboBox" Grid.Row="2" Margin="3" Grid.Column="3" SelectionChanged="recognitionTypeComboBox_SelectionChanged">
-                    <ComboBoxItem>Automatic Recognition</ComboBoxItem>
-                    <ComboBoxItem>Threshold (Auto)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (50)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (100)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (150)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (200)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (250)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (300)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (350)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (400)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (450)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (500)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (550)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (600)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (650)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (700)</ComboBoxItem>
-                    <ComboBoxItem>Threshold (750)</ComboBoxItem>
-                </ComboBox>
+                <ComboBox Name="recognitionTypeComboBox" Grid.Row="2" Margin="3" Grid.Column="3" SelectionChanged="recognitionTypeComboBox_SelectionChanged"></ComboBox>
                 <Button Name="startBarcodeReadingButton" Grid.Row="3" Grid.Column="0" Margin="5,3" Click="startBarcodeReadingButton_Click">Start Barcode Reading</Button>
                 <Button Name="stopBarcodeReadingButton" Grid.Row="3" Grid.Column="1" Margin="5,3" Click="stopBarcodeReadingButton_Click">Stop Barcode Reading</Button>
                 <Button Name="saveImageAsButton" Grid.Row="3" Grid.Column="3" Margin="5,3" Click="saveImageAsButton_Click" IsEnabled="False">Save Image As...</Button>

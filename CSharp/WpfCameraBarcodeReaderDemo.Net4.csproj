@@ -85,15 +85,15 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
-    <PackageReference Include="Vintasoft.Barcode" Version="15.1.6.1" />
-    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="15.1.6.1" />
-    <PackageReference Include="Vintasoft.Imaging" Version="14.0.11.1" />
-    <PackageReference Include="Vintasoft.Imaging.Gdi" Version="14.0.11.1" />
-    <PackageReference Include="Vintasoft.Imaging.Media" Version="14.0.11.1" />
-    <PackageReference Include="Vintasoft.Imaging.UI" Version="14.0.11.1" />
-    <PackageReference Include="Vintasoft.Imaging.Wpf" Version="14.0.11.1" />
-    <PackageReference Include="Vintasoft.Imaging.Wpf.UI" Version="14.0.11.1" />
-    <PackageReference Include="Vintasoft.Shared" Version="4.4.0.1" />
+    <PackageReference Include="Vintasoft.Barcode" Version="15.1.8.1" />
+    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="15.1.8.1" />
+    <PackageReference Include="Vintasoft.Imaging" Version="14.1.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Gdi" Version="14.1.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Media" Version="14.1.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.UI" Version="14.1.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf" Version="14.1.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf.UI" Version="14.1.0.1" />
+    <PackageReference Include="Vintasoft.Shared" Version="4.5.0.1" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -104,10 +104,6 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Page Include="WpfDemosCommonCode\WpfAboutBoxBaseWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -122,6 +118,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ImagingCameraBarcodeScanner.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -149,6 +146,10 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
+    <Page Include="MainWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>XamlIntelliSenseFileGenerator</Generator>
+    </Page>
     <Resource Include="App.ico" />
     <Resource Include="WpfDemosCommonCode\Resources\VintasoftLogo.png">
     </Resource>

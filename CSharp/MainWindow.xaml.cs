@@ -7,22 +7,22 @@ using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 
 using Microsoft.Win32;
 
-using Vintasoft.Imaging;
-using Vintasoft.Imaging.Media;
-using Vintasoft.Imaging.Wpf;
 using Vintasoft.Barcode;
 using Vintasoft.Barcode.BarcodeInfo;
 using Vintasoft.Barcode.SymbologySubsets;
 
+using Vintasoft.Imaging;
+using Vintasoft.Imaging.Drawing;
+using Vintasoft.Imaging.Media;
+
 using WpfDemosCommonCode;
 using WpfDemosCommonCode.Imaging.Codecs;
-using Vintasoft.Imaging.Drawing;
+
+using CameraBarcodeReaderDemo;
 
 namespace WpfCameraBarcodeReaderDemo
 {
@@ -35,14 +35,9 @@ namespace WpfCameraBarcodeReaderDemo
         #region Fields
 
         /// <summary>
-        /// Current capture device.
+        /// The imaging camera barcode scanner.
         /// </summary>
-        ImageCaptureDevice _captureDevice;
-
-        /// <summary>
-        /// Capture devices monitor.
-        /// </summary>
-        ImageCaptureDevicesMonitor _captureDevicesMonitor;
+        ImagingCameraBarcodeScanner _imagingCameraBarcodeScanner;
 
         /// <summary>
         /// ImageCaptureSource for video preview.
@@ -50,19 +45,10 @@ namespace WpfCameraBarcodeReaderDemo
         ImageCaptureSource _previewImageCaptureSource;
 
         /// <summary>
-        /// ImageCaptureSource for barcode recognition.
-        /// </summary>
-        ImageCaptureSource _barcodeReaderImageCaptureSource;
-
-        /// <summary>
-        /// Barcode reader.
-        /// </summary>
-        BarcodeReader _barcodeReader;
-
-        /// <summary>
         /// The source recognized image.
         /// </summary>
         VintasoftImage _recognizedSourceImage;
+
 
         /// <summary>
         /// F1 hot key.
@@ -73,8 +59,6 @@ namespace WpfCameraBarcodeReaderDemo
         /// The save recognized image dialog.
         /// </summary>
         SaveFileDialog _saveRecognizedImageDialog = new SaveFileDialog();
-
-        //DateTime _lastRecognitionTime = DateTime.Now;
 
         #endregion
 
@@ -95,34 +79,27 @@ namespace WpfCameraBarcodeReaderDemo
             _previewImageCaptureSource.CaptureCompleted +=
                 new EventHandler<ImageCaptureCompletedEventArgs>(PreviewImageCaptureSource_CaptureCompleted);
 
-            _barcodeReaderImageCaptureSource = new ImageCaptureSource();
-            _barcodeReaderImageCaptureSource.CaptureCompleted +=
-                new EventHandler<ImageCaptureCompletedEventArgs>(BarcodeReaderImageCaptureSource_CaptureCompleted);
+            _imagingCameraBarcodeScanner = new ImagingCameraBarcodeScanner();
+            _imagingCameraBarcodeScanner.CaptureDevicesChanged += ImagingCameraBarcodeScanner_CaptureDevicesChanged;
+            _imagingCameraBarcodeScanner.ScanningStart += ImagingCameraBarcodeScanner_ScanningStart;
+            _imagingCameraBarcodeScanner.ScanningStop += ImagingCameraBarcodeScanner_ScanningStop;
+            _imagingCameraBarcodeScanner.ScanningException += ImagingCameraBarcodeScanner_ScanningException;
+            _imagingCameraBarcodeScanner.BarcodeScanner.FrameScanFinished += BarcodeScanner_FrameScanFinished;
 
-            _captureDevicesMonitor = new ImageCaptureDevicesMonitor();
-            _captureDevicesMonitor.CaptureDevicesChanged +=
-                new EventHandler<ImageCaptureDevicesChangedEventArgs>(CaptureDevicesMonitor_CaptureDevicesChanged);
 
             CodecsFileFilters.SetFilters(_saveRecognizedImageDialog, false);
 
             if (!DesignerProperties.GetIsInDesignMode(this))
             {
-                _captureDevicesMonitor.Start();
-
                 InitCamerasComboBox();
-                InitBarcodeReader();
+                InitBarcodeScannerUI();
 
                 UpdateUI();
             }
 
-            imageViewerForCameraPreview.InputGestureCut = null;
-            imageViewerForCameraPreview.InputGestureDelete = null;
-            imageViewerForCameraPreview.InputGestureInsert = null;
-
-            imageViewerForCapturedImageWithBarcodes.InputGestureCut = null;
-            imageViewerForCapturedImageWithBarcodes.InputGestureDelete = null;
-            imageViewerForCapturedImageWithBarcodes.InputGestureInsert = null;
-
+            recognitionTypeComboBox.Items.Add(CameraBarcodeScannerMode.Adaptive);
+            recognitionTypeComboBox.Items.Add(CameraBarcodeScannerMode.Balanced);
+            recognitionTypeComboBox.Items.Add(CameraBarcodeScannerMode.BestQuality);
             recognitionTypeComboBox.SelectedIndex = 0;
         }
 
@@ -168,165 +145,40 @@ namespace WpfCameraBarcodeReaderDemo
             }
         }
 
+        /// <summary>
+        /// Gets or sets the capture device.
+        /// </summary>
+        public ImageCaptureDevice CaptureDevice
+        {
+            get
+            {
+                return _imagingCameraBarcodeScanner.CaptureDevice;
+            }
+            set
+            {
+                _imagingCameraBarcodeScanner.CaptureDevice = value;
+            }
+        }
+
         #endregion
 
 
 
         #region Methods
 
-        #region Init
+        #region UI
+
+        #region Main Window
 
         /// <summary>
-        /// Inits the combo box with camera names.
+        /// Handles the Closing event of Window object.
         /// </summary>
-        private void InitCamerasComboBox()
+        private void Window_Closing(object sender, CancelEventArgs e)
         {
-            camerasComboBox.Items.Clear();
-
-            ReadOnlyCollection<ImageCaptureDevice> captureDevices = ImageCaptureDeviceConfiguration.GetCaptureDevices();
-
-            foreach (ImageCaptureDevice device in captureDevices)
-            {
-                camerasComboBox.Items.Add(device);
-            }
-
-            if (captureDevices.Contains(_captureDevice))
-            {
-                camerasComboBox.SelectedItem = _captureDevice;
-            }
-            else
-            {
-                _captureDevice = null;
-
-                if (camerasComboBox.Items.Count > 0)
-                {
-                    _captureDevice = captureDevices[0];
-                    camerasComboBox.SelectedItem = _captureDevice;
-                }
-            }
-            UpdateSupportedFormats();
-        }
-
-        /// <summary>
-        /// Inits the barcode reader.
-        /// </summary>
-        private void InitBarcodeReader()
-        {
-            _barcodeReader = new BarcodeReader();
-            _barcodeReader.Settings.MaximumThreadCount = Environment.ProcessorCount + 1;
-            _barcodeReader.Settings.ScanDirection = ScanDirection.Horizontal | ScanDirection.Vertical;
-            _barcodeReader.Settings.ScanBarcodeTypes = BarcodeType.Aztec | BarcodeType.EAN13 | BarcodeType.Code39 | BarcodeType.Code128 | BarcodeType.DataMatrix | BarcodeType.QR;
-            _barcodeReader.Settings.MinConfidence = 95;
-
-            _barcodeReader.Settings.AutomaticRecognition = true;
-
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Aztec | BarcodeType.DataMatrix | BarcodeType.QR | BarcodeType.PDF417 | BarcodeType.PDF417Compact);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code39 | BarcodeType.Code128 | BarcodeType.EAN13 | BarcodeType.UPCA | BarcodeType.UPCE);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Aztec);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.DataMatrix);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.DotCode);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.QR);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MicroQR);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.HanXinCode);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.PDF417 | BarcodeType.PDF417Compact);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MicroPDF417);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MaxiCode);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code16K);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.IATA2of5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Matrix2of5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code11);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Codabar);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code128);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code39);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code93);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.EAN13);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.EAN13Plus2);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.EAN13Plus5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.EAN8);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.UPCA);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.UPCE);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Interleaved2of5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Standard2of5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MSI);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Pharmacode);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RSS14);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RSSExpanded);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RSSLimited);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Telepen);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.AustralianPost);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.IntelligentMail);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RoyalMail);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Planet);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Postnet);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Mailmark4StateC);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Mailmark4StateL);
-
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.Code32);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.Code39Extended);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.EANVelocity);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarLimited);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISBN);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISBNPlus2);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISBNPlus5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISMN);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISMNPlus2);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISMNPlus5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISSN);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISSNPlus2);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ISSNPlus5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.JAN13);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.JAN13Plus2);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.JAN13Plus5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.JAN8);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.JAN8Plus2);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.JAN8Plus5);
-            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.NumlyNumber);
-
-            if (!BarcodeGlobalSettings.IsDemoVersion)
-            {
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.OPC);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.VIN);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.SSCC18);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.SwissPostParcel);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.VicsBol);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.VicsScacPro);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ITF14);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.FedExGround96);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.DhlAwb);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.DeutschePostIdentcode);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.DeutschePostLeitcode);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.MailmarkCmdmType7);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.MailmarkCmdmType9);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.MailmarkCmdmType29);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1Aztec);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataMatrix);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1QR);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1_128);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBar);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarStacked);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarExpanded);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarExpandedStacked);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarLimited);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.PPN);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.PZN);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedAztec);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedDataMatrix);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedPDF417);
-                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedQRCode);
-            }
-
-            // sort supported barcode list
-            object[] barcodes = new object[scanBarcodeTypeComboBox.Items.Count];
-            scanBarcodeTypeComboBox.Items.CopyTo(barcodes, 0);
-            string[] names = new string[barcodes.Length];
-            for (int i = 0; i < barcodes.Length; i++)
-                names[i] = barcodes[i].ToString();
-            Array.Sort(names, barcodes);
-            scanBarcodeTypeComboBox.Items.Clear();
-            foreach (object item in barcodes)
-                scanBarcodeTypeComboBox.Items.Add(item);
-
-            scanBarcodeTypeComboBox.SelectedItem = BarcodeType.Code39 | BarcodeType.Code128 | BarcodeType.EAN13 | BarcodeType.UPCA | BarcodeType.UPCE;
+            _imagingCameraBarcodeScanner.StopScanning();
+            StopCapturing();
+            if (_recognizedSourceImage != null)
+                _recognizedSourceImage.Dispose();
         }
 
         #endregion
@@ -378,31 +230,16 @@ namespace WpfCameraBarcodeReaderDemo
         #endregion
 
 
-        #region UI
+        #region Camera panel
 
         /// <summary>
-        /// Updates UI.
+        /// Handles the SelectionChanged event of camerasComboBox object.
         /// </summary>
-        private void UpdateUI()
+        private void camerasComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            bool isCapturingStarted = _previewImageCaptureSource.State != ImageCaptureState.Stopped;
-            startImageCapturingButton.IsEnabled = _captureDevice != null && !isCapturingStarted;
-            startImageCapturingMenuItem.IsEnabled = _captureDevice != null && !isCapturingStarted;
-            stopImageCapturingButton.IsEnabled = _captureDevice != null && isCapturingStarted;
-            stopImageCapturingMenuItem.IsEnabled = _captureDevice != null && isCapturingStarted;
-            configureCameraButton.IsEnabled = _captureDevice != null;
-            configureCameraMenuItem.IsEnabled = _captureDevice != null;
-
-            bool isBarcodeReadingStarted = _barcodeReaderImageCaptureSource.State != ImageCaptureState.Stopped;
-            startBarcodeReadingButton.IsEnabled = isCapturingStarted && !isBarcodeReadingStarted;
-            if (!isBarcodeReadingStarted)
-                startBarcodeReadingButton.Content = "Start Barcode Reading";
-            startBarcodeReadingMenuItem.IsEnabled = isCapturingStarted && !isBarcodeReadingStarted;
-            stopBarcodeReadingButton.IsEnabled = isCapturingStarted && isBarcodeReadingStarted;
-            stopBarcodeReadingMenuItem.IsEnabled = isCapturingStarted && isBarcodeReadingStarted;
-
-            camerasComboBox.IsEnabled = !isCapturingStarted;
-            supportedFormatsComboBox.IsEnabled = _captureDevice != null && !isCapturingStarted;
+            if (_previewImageCaptureSource.State == ImageCaptureState.Stopped)
+                PreviewImage = null;
+            UpdateSupportedImageCaptureFormats();
         }
 
         /// <summary>
@@ -428,7 +265,7 @@ namespace WpfCameraBarcodeReaderDemo
         /// </summary>
         private void stopImageCapturingButton_Click(object sender, RoutedEventArgs e)
         {
-            StopBarcodeReading();
+            _imagingCameraBarcodeScanner.StopScanning();
             StopCapturing();
 
             UpdateUI();
@@ -441,8 +278,8 @@ namespace WpfCameraBarcodeReaderDemo
         {
             try
             {
-                _captureDevice = (ImageCaptureDevice)camerasComboBox.SelectedItem;
-                _captureDevice.ShowPropertiesDialog();
+                _imagingCameraBarcodeScanner.CaptureDevice = (ImageCaptureDevice)camerasComboBox.SelectedItem;
+                _imagingCameraBarcodeScanner.CaptureDevice.ShowPropertiesDialog();
             }
             catch (Exception ex)
             {
@@ -450,30 +287,25 @@ namespace WpfCameraBarcodeReaderDemo
             }
         }
 
+        #endregion
+
+
+        #region Barcode Reader panel
+
         /// <summary>
         /// Recognition type is changed.
         /// </summary>
         private void recognitionTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_barcodeReader == null)
-                return;
-            if (recognitionTypeComboBox.SelectedIndex == 0)
+            _imagingCameraBarcodeScanner.BarcodeScanner.RecognitionMode = (CameraBarcodeScannerMode)recognitionTypeComboBox.SelectedItem;
+
+            if (_imagingCameraBarcodeScanner.BarcodeScanner.RecognitionMode == CameraBarcodeScannerMode.BestQuality)
             {
-                // Automatic Recognition
-                _barcodeReader.Settings.AutomaticRecognition = true;
-            }
-            else if (recognitionTypeComboBox.SelectedIndex == 1)
-            {
-                // Threshold (Auto)
-                _barcodeReader.Settings.AutomaticRecognition = false;
-                _barcodeReader.Settings.ThresholdMode = ThresholdMode.Automatic;
+                _imagingCameraBarcodeScanner.BarcodeScanner.ScannerSettings.AdaptiveBinarizationType = AdaptiveBinarizationType.HighQuality;
             }
             else
             {
-                // Threshold
-                _barcodeReader.Settings.AutomaticRecognition = false;
-                _barcodeReader.Settings.ThresholdMode = ThresholdMode.Manual;
-                _barcodeReader.Settings.Threshold = 50 + (recognitionTypeComboBox.SelectedIndex - 1) * 50;
+                _imagingCameraBarcodeScanner.BarcodeScanner.ScannerSettings.AdaptiveBinarizationType = AdaptiveBinarizationType.Fast;
             }
         }
 
@@ -482,22 +314,19 @@ namespace WpfCameraBarcodeReaderDemo
         /// </summary>
         private void scanBarcodeTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_barcodeReader == null)
-                return;
-            
             if (scanBarcodeTypeComboBox.SelectedItem == null)
                 return;
 
-            _barcodeReader.Settings.ScanBarcodeTypes = BarcodeType.None;
+            _imagingCameraBarcodeScanner.BarcodeScanner.ScannerSettings.ScanBarcodeTypes = BarcodeType.None;
 
             if (scanBarcodeTypeComboBox.SelectedItem is BarcodeSymbologySubset)
             {
-                _barcodeReader.Settings.ScanBarcodeSubsets.Clear();
-                _barcodeReader.Settings.ScanBarcodeSubsets.Add((BarcodeSymbologySubset)scanBarcodeTypeComboBox.SelectedItem);
+                _imagingCameraBarcodeScanner.BarcodeScanner.ScannerSettings.ScanBarcodeSubsets.Clear();
+                _imagingCameraBarcodeScanner.BarcodeScanner.ScannerSettings.ScanBarcodeSubsets.Add((BarcodeSymbologySubset)scanBarcodeTypeComboBox.SelectedItem);
             }
             else
             {
-                _barcodeReader.Settings.ScanBarcodeTypes = (BarcodeType)scanBarcodeTypeComboBox.SelectedItem;
+                _imagingCameraBarcodeScanner.BarcodeScanner.ScannerSettings.ScanBarcodeTypes = (BarcodeType)scanBarcodeTypeComboBox.SelectedItem;
             }
         }
 
@@ -506,7 +335,7 @@ namespace WpfCameraBarcodeReaderDemo
         /// </summary>
         private void startBarcodeReadingButton_Click(object sender, RoutedEventArgs e)
         {
-            StartBarcodeReading();
+            _imagingCameraBarcodeScanner.StartScanning();
 
             UpdateUI();
         }
@@ -516,53 +345,191 @@ namespace WpfCameraBarcodeReaderDemo
         /// </summary>
         private void stopBarcodeReadingButton_Click(object sender, RoutedEventArgs e)
         {
-            StopBarcodeReading();
+            _imagingCameraBarcodeScanner.StopScanning();
 
             UpdateUI();
         }
 
         /// <summary>
-        /// Handles the Closing event of Window object.
+        /// Handles the Click event of saveImageAsButton object.
         /// </summary>
-        private void Window_Closing(object sender, CancelEventArgs e)
+        private void saveImageAsButton_Click(object sender, RoutedEventArgs e)
         {
-            StopBarcodeReading();
-            StopCapturing();
+            if (_saveRecognizedImageDialog.ShowDialog().Value)
+            {
+                try
+                {
+                    _recognizedSourceImage.Save(_saveRecognizedImageDialog.FileName);
+                }
+                catch (Exception ex)
+                {
+                    DemosTools.ShowErrorMessage(ex);
+                }
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+
+        #region UI state
+
+        /// <summary>
+        /// Updates UI.
+        /// </summary>
+        private void UpdateUI()
+        {
+            bool isCapturingStarted = _previewImageCaptureSource.State != ImageCaptureState.Stopped;
+            startImageCapturingButton.IsEnabled = CaptureDevice != null && !isCapturingStarted;
+            startImageCapturingMenuItem.IsEnabled = CaptureDevice != null && !isCapturingStarted;
+            stopImageCapturingButton.IsEnabled = CaptureDevice != null && isCapturingStarted;
+            startImageCapturingMenuItem.IsEnabled = CaptureDevice != null && isCapturingStarted;
+            configureCameraButton.IsEnabled = CaptureDevice != null;
+            configureCameraMenuItem.IsEnabled = CaptureDevice != null;
+
+            bool isBarcodeReadingStarted = _imagingCameraBarcodeScanner.IsStarted;
+            startBarcodeReadingButton.IsEnabled = isCapturingStarted && !isBarcodeReadingStarted;
+            if (!isBarcodeReadingStarted)
+                startBarcodeReadingButton.Content = "Start Barcode Reading";
+            startBarcodeReadingMenuItem.IsEnabled = isCapturingStarted && !isBarcodeReadingStarted;
+            stopBarcodeReadingButton.IsEnabled = isCapturingStarted && isBarcodeReadingStarted;
+            stopBarcodeReadingMenuItem.IsEnabled = isCapturingStarted && isBarcodeReadingStarted;
+
+            camerasComboBox.IsEnabled = !isCapturingStarted;
+            supportedFormatsComboBox.IsEnabled = CaptureDevice != null && !isCapturingStarted;
         }
 
         #endregion
 
 
-        #region Capture devices monitor
+        #region Init
 
         /// <summary>
-        /// Collection of available capture devices is changed.
+        /// Inits the combo box with camera names.
         /// </summary>
-        private void CaptureDevicesMonitor_CaptureDevicesChanged(object sender, ImageCaptureDevicesChangedEventArgs e)
+        private void InitCamerasComboBox()
         {
-            if (Thread.CurrentThread != Dispatcher.Thread)
+            camerasComboBox.Items.Clear();
+
+            ReadOnlyCollection<ImageCaptureDevice> captureDevices = ImageCaptureDeviceConfiguration.GetCaptureDevices();
+
+            foreach (ImageCaptureDevice device in captureDevices)
             {
-                Dispatcher.Invoke(new CaptureDevicesMonitor_CaptureDevicesChangedDelegate(CaptureDevicesMonitor_CaptureDevicesChanged), sender, e);
+                camerasComboBox.Items.Add(device);
+            }
+
+            if (captureDevices.Contains(CaptureDevice))
+            {
+                camerasComboBox.SelectedItem = CaptureDevice;
             }
             else
             {
-                List<ImageCaptureDevice> removedCameras = new List<ImageCaptureDevice>(e.RemovedDevices);
+                CaptureDevice = null;
 
-                if (removedCameras.Contains(_captureDevice))
+                if (camerasComboBox.Items.Count > 0)
                 {
-                    StopBarcodeReading();
-                    StopCapturing();
+                    CaptureDevice = captureDevices[0];
+                    camerasComboBox.SelectedItem = CaptureDevice;
                 }
-
-                foreach (ImageCaptureDevice removedDevice in e.RemovedDevices)
-                    captureDeviceMonitorTextBox.AppendText(string.Format("Device '{0}' is disconnected.{1}", removedDevice.FriendlyName, Environment.NewLine));
-                foreach (ImageCaptureDevice addedDevice in e.AddedDevices)
-                    captureDeviceMonitorTextBox.AppendText(string.Format("Device '{0}' is connected.{1}", addedDevice.FriendlyName, Environment.NewLine));
-
-                InitCamerasComboBox();
-
-                UpdateUI();
             }
+
+            UpdateSupportedImageCaptureFormats();
+        }
+
+        /// <summary>
+        /// Inits the barcode reader.
+        /// </summary>
+        private void InitBarcodeScannerUI()
+        {
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Aztec | BarcodeType.DataMatrix | BarcodeType.QR | BarcodeType.PDF417 | BarcodeType.Code39 | BarcodeType.Code128 | BarcodeType.EAN13 | BarcodeType.UPCA | BarcodeType.UPCE);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Aztec | BarcodeType.DataMatrix | BarcodeType.QR | BarcodeType.PDF417);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code39 | BarcodeType.Code128 | BarcodeType.EAN13 | BarcodeType.UPCA | BarcodeType.UPCE);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Aztec);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.DataMatrix);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.DotCode);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.QR);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MicroQR);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.HanXinCode);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.PDF417 | BarcodeType.PDF417Compact);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MicroPDF417);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MaxiCode);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code16K);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.IATA2of5);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Matrix2of5);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code11);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Codabar);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code128);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code39);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Code93);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Interleaved2of5);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Standard2of5);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.MSI);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Pharmacode);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RSS14);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RSSExpanded);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RSSLimited);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Telepen);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.AustralianPost);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.IntelligentMail);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.RoyalMail);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Planet);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Postnet);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Mailmark4StateC);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeType.Mailmark4StateL);
+
+
+            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.Code32);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.Code39Extended);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.EANVelocity);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarLimited);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.NumlyNumber);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1QR);
+            scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedQRCode);
+
+            if (!BarcodeGlobalSettings.IsDemoVersion)
+            {
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.OPC);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.VIN);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.SSCC18);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.SwissPostParcel);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.VicsBol);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.VicsScacPro);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.ITF14);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.FedExGround96);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.DhlAwb);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.DeutschePostIdentcode);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.DeutschePostLeitcode);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.MailmarkCmdmType7);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.MailmarkCmdmType9);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.MailmarkCmdmType29);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1Aztec);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataMatrix);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1_128);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBar);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarStacked);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarExpanded);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarExpandedStacked);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.GS1DataBarLimited);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.PPN);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.PZN);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedAztec);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedDataMatrix);
+                scanBarcodeTypeComboBox.Items.Add(BarcodeSymbologySubsets.XFACompressedPDF417);
+            }
+
+            // sort supported barcode list
+            object[] barcodes = new object[scanBarcodeTypeComboBox.Items.Count];
+            scanBarcodeTypeComboBox.Items.CopyTo(barcodes, 0);
+            string[] names = new string[barcodes.Length];
+            for (int i = 0; i < barcodes.Length; i++)
+                names[i] = barcodes[i].ToString();
+            Array.Sort(names, barcodes);
+            scanBarcodeTypeComboBox.Items.Clear();
+            foreach (object item in barcodes)
+                scanBarcodeTypeComboBox.Items.Add(item);
+
+            scanBarcodeTypeComboBox.SelectedItem = BarcodeType.Aztec | BarcodeType.DataMatrix | BarcodeType.QR | BarcodeType.PDF417 | BarcodeType.Code39 | BarcodeType.Code128 | BarcodeType.EAN13 | BarcodeType.UPCA | BarcodeType.UPCE;
         }
 
         #endregion
@@ -571,39 +538,17 @@ namespace WpfCameraBarcodeReaderDemo
         #region Camera
 
         /// <summary>
-        /// Handles the SelectionChanged event of camerasComboBox object.
+        /// Updates the supported image capture formats.
         /// </summary>
-        private void camerasComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_previewImageCaptureSource == null)
-                return;
-            if (_previewImageCaptureSource.State == ImageCaptureState.Stopped)
-                PreviewImage = null;
-            UpdateSupportedFormats();
-        }
-
-        private void UpdateSupportedFormats()
+        private void UpdateSupportedImageCaptureFormats()
         {
             supportedFormatsComboBox.Items.Clear();
             ImageCaptureDevice device = (ImageCaptureDevice)camerasComboBox.SelectedItem;
-            if (device != null && device.SupportedFormats != null)
+            ReadOnlyCollection<ImageCaptureFormat> formats = _imagingCameraBarcodeScanner.CaptureFormats;
+            if (device != null && formats != null)
             {
-                List<uint> imageCaptureFormatSizes = new List<uint>();
-                for (int i = 0; i < device.SupportedFormats.Count; i++)
-                {
-                    // if format has bit depth less or equal than 12 bit
-                    if (device.SupportedFormats[i].BitsPerPixel <= 12)
-                        // ignore formats with bit depth less or equal than 12 bit because they may cause issues on Windows 8
-                        continue;
-
-                    uint imageCaptureFormatSize = (uint)(device.SupportedFormats[i].Width | (device.SupportedFormats[i].Height << 16));
-                    if (!imageCaptureFormatSizes.Contains(imageCaptureFormatSize))
-                    {
-                        imageCaptureFormatSizes.Add(imageCaptureFormatSize);
-
-                        supportedFormatsComboBox.Items.Add(device.SupportedFormats[i]);
-                    }
-                }
+                foreach (ImageCaptureFormat format in formats)
+                    supportedFormatsComboBox.Items.Add(format);
 
                 if (device.DesiredFormat != null)
                     supportedFormatsComboBox.SelectedItem = device.DesiredFormat;
@@ -613,28 +558,11 @@ namespace WpfCameraBarcodeReaderDemo
         }
 
         /// <summary>
-        /// Show captured preview image and initialize new image capture request.
+        /// Shows captured preview image and initialize new image capture request.
         /// </summary>
         private void PreviewImageCaptureSource_CaptureCompleted(object sender, ImageCaptureCompletedEventArgs e)
         {
             VintasoftImage image = e.GetCapturedImage();
-
-            // if automatic recognition is not used then
-            if (!_barcodeReader.Settings.AutomaticRecognition &&
-                _barcodeReaderImageCaptureSource.State == ImageCaptureState.Started)
-            {
-                // process barcode image
-                using (BarcodeReader tempBarcodeReader = new BarcodeReader())
-                {
-                    tempBarcodeReader.Settings = _barcodeReader.Settings.Clone();
-                    using (VintasoftBitmap bmp = image.GetAsVintasoftBitmap())
-                    {
-                        VintasoftImage processedImage = new VintasoftImage(tempBarcodeReader.ProcessImage(bmp), true);
-                        image.Dispose();
-                        image = processedImage;
-                    }
-                }
-            }
 
             PreviewImage = image;
 
@@ -647,15 +575,14 @@ namespace WpfCameraBarcodeReaderDemo
         /// </summary>
         private void StartCapturing()
         {
-            _captureDevice = (ImageCaptureDevice)camerasComboBox.SelectedItem;
-            _captureDevice.DesiredFormat = (ImageCaptureFormat)supportedFormatsComboBox.SelectedItem;
-            _previewImageCaptureSource.CaptureDevice = _captureDevice;
+            CaptureDevice = (ImageCaptureDevice)camerasComboBox.SelectedItem;
+            CaptureDevice.DesiredFormat = (ImageCaptureFormat)supportedFormatsComboBox.SelectedItem;
+            _previewImageCaptureSource.CaptureDevice = CaptureDevice;
             _previewImageCaptureSource.Start();
             _previewImageCaptureSource.CaptureAsync();
 
-            captureDeviceMonitorTextBox.AppendText(string.Format("Image capturing started ({0}).", _captureDevice.FriendlyName));
+            captureDeviceMonitorTextBox.AppendText(string.Format("Image capturing started ({0}).", CaptureDevice.FriendlyName));
             captureDeviceMonitorTextBox.AppendText(Environment.NewLine);
-
         }
 
         /// <summary>
@@ -667,7 +594,7 @@ namespace WpfCameraBarcodeReaderDemo
             {
                 _previewImageCaptureSource.Stop();
 
-                captureDeviceMonitorTextBox.AppendText(string.Format("Image capturing stopped ({0}).", _captureDevice.FriendlyName));
+                captureDeviceMonitorTextBox.AppendText(string.Format("Image capturing stopped ({0}).", CaptureDevice.FriendlyName));
                 captureDeviceMonitorTextBox.AppendText(Environment.NewLine);
             }
         }
@@ -675,85 +602,110 @@ namespace WpfCameraBarcodeReaderDemo
         #endregion
 
 
-        #region Read barcodes
+        #region Barcode scanner
 
         /// <summary>
-        /// Starts barcode reading from camera.
+        /// Handles the ScanningException event of ImagingCameraBarcodeScanner object.
         /// </summary>
-        private void StartBarcodeReading()
+        private void ImagingCameraBarcodeScanner_ScanningException(object sender, ExceptionEventArgs e)
         {
-            _barcodeReaderImageCaptureSource.CaptureDevice = _captureDevice;
-            _barcodeReaderImageCaptureSource.Start();
-            _barcodeReaderImageCaptureSource.CaptureAsync();
+            ShowErrorMessageAsync(e.Exception.ToString());
+        }
 
+        /// <summary>
+        /// Handles the ScanningStart event of ImagingCameraBarcodeScanner object.
+        /// </summary>
+        private void ImagingCameraBarcodeScanner_ScanningStart(object sender, EventArgs e)
+        {
+            if (Thread.CurrentThread != Dispatcher.Thread)
+            {
+                Dispatcher.Invoke(new ThreadStart(OnBarcodeRecognitionStarted));
+            }
+            else
+            {
+                OnBarcodeRecognitionStarted();
+            }
+        }
+        private void OnBarcodeRecognitionStarted()
+        {
             readerResultsTextBox.AppendText("Barcode recognition started.");
             readerResultsTextBox.AppendText(Environment.NewLine);
         }
 
         /// <summary>
-        /// Stops barcode reading from camera.
+        /// Handles the ScanningStop event of ImagingCameraBarcodeScanner object.
         /// </summary>
-        private void StopBarcodeReading()
+        private void ImagingCameraBarcodeScanner_ScanningStop(object sender, EventArgs e)
         {
-            if (_barcodeReaderImageCaptureSource.State != ImageCaptureState.Stopped)
+            if (Thread.CurrentThread != Dispatcher.Thread)
             {
-                _barcodeReaderImageCaptureSource.Stop();
-                readerResultsTextBox.AppendText("Barcode recognition stopped.");
-                readerResultsTextBox.AppendText(Environment.NewLine);
+                Dispatcher.Invoke(new ThreadStart(OnBarcodeRecognitionStopped));
+            }
+            else
+            {
+                OnBarcodeRecognitionStopped();
+            }
+        }
+
+        private void OnBarcodeRecognitionStopped()
+        {
+            readerResultsTextBox.AppendText("Barcode recognition stopped.");
+            readerResultsTextBox.AppendText(Environment.NewLine);
+        }
+
+        /// <summary>
+        /// Handles the CaptureDevicesChanged event of ImagingCameraBarcodeScanner object.
+        /// </summary>
+        private void ImagingCameraBarcodeScanner_CaptureDevicesChanged(object sender, ImageCaptureDevicesChangedEventArgs e)
+        {
+            if (Thread.CurrentThread != Dispatcher.Thread)
+            {
+                Dispatcher.Invoke(new CaptureDevicesMonitor_CaptureDevicesChangedDelegate(ImagingCameraBarcodeScanner_CaptureDevicesChanged), sender, e);
+            }
+            else
+            {
+                List<ImageCaptureDevice> removedCameras = new List<ImageCaptureDevice>(e.RemovedDevices);
+
+                if (removedCameras.Contains(CaptureDevice))
+                {
+                    StopCapturing();
+                }
+
+                // add messages about changes
+                foreach (ImageCaptureDevice removedDevice in e.RemovedDevices)
+                    captureDeviceMonitorTextBox.AppendText(string.Format("Device '{0}' is disconnected.{1}", removedDevice.FriendlyName, Environment.NewLine));
+                foreach (ImageCaptureDevice addedDevice in e.AddedDevices)
+                    captureDeviceMonitorTextBox.AppendText(string.Format("Device '{0}' is connected.{1}", addedDevice.FriendlyName, Environment.NewLine));
+
+                InitCamerasComboBox();
+
+                UpdateUI();
             }
         }
 
         /// <summary>
-        /// Recognize barcode on captured image and initialize new image capture request.
+        /// Handles the FrameScanFinished event of BarcodeScanner object.
         /// </summary>
-        private void BarcodeReaderImageCaptureSource_CaptureCompleted(object sender, ImageCaptureCompletedEventArgs e)
+        private void BarcodeScanner_FrameScanFinished(object sender, FrameScanFinishedEventArgs e)
         {
-            try
+            // if barcode recognized then
+            if (e.FoundBarcodes.Length > 0)
             {
-                IBarcodeInfo[] barcodeInfo;
+                VintasoftImage image = new VintasoftImage((VintasoftBitmap)e.Frame.Clone(), true);
 
-                // gets captured image
-                VintasoftImage image = e.GetCapturedImage();
+                // show reader results
+                Dispatcher.Invoke(new ShowRecognitionResultsDelegate(ShowRecognitionResults), new object[] { e.FoundBarcodes, image });
 
-                // read barcodes from image
-                using (VintasoftBitmap bitmap = image.GetAsVintasoftBitmap())
-                    barcodeInfo = _barcodeReader.ReadBarcodes(bitmap);
-
-                // if barcode reading started then
-                if (_barcodeReaderImageCaptureSource.State == ImageCaptureState.Started)
-                {
-                    // show FPS
-                    //TimeSpan timeSpan = DateTime.Now - _lastRecognitionTime;
-                    //string fps = string.Format("{0:f2} FPS", 1000 / timeSpan.TotalMilliseconds);
-                    //Dispatcher.Invoke(new SetButtonTextDelegate(SetButtonText), new object[] { startBarcodeReadingButton, fps });
-                    //_lastRecognitionTime = DateTime.Now;
-
-                    // if barcode recognized then
-                    if (barcodeInfo.Length > 0)
-                    {
-                        // show reader results
-                        Dispatcher.Invoke(new ShowRecognitionResultsDelegate(ShowRecognitionResults), new object[] { barcodeInfo, image });
-
-                        // show captured image in image viewer
-                        RecognizedImage = image;
-                    }
-                    else
-                    {
-                        // dispose captured image
-                        image.Dispose();
-                    }
-
-                    // capture next image 
-                    _barcodeReaderImageCaptureSource.CaptureAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowErrorMessageAsync(ex.Message);
+                // show captured image in image viewer
+                RecognizedImage = image;
             }
         }
 
-
+        /// <summary>
+        /// Returns information about recognized barcodes.
+        /// </summary>
+        /// <param name="barcodes">Recognized barcodes.</param>
+        /// <returns>Information about recognized barcodes.</returns>
         private string GetBarcodesInfo(IBarcodeInfo[] barcodes)
         {
             StringBuilder result = new StringBuilder();
@@ -765,7 +717,7 @@ namespace WpfCameraBarcodeReaderDemo
         }
 
         /// <summary>
-        /// Gets a barcode information as text.
+        /// Returns barcode information as a text.
         /// </summary>
         private string GetBarcodeInfo(int index, IBarcodeInfo info)
         {
@@ -809,15 +761,22 @@ namespace WpfCameraBarcodeReaderDemo
             return result.ToString();
         }
 
+        /// <summary>
+        /// Removes special characters from string.
+        /// </summary>
         private string RemoveSpecialCharacters(string text)
         {
             StringBuilder sb = new StringBuilder();
             if (text != null)
+            {
                 for (int i = 0; i < text.Length; i++)
+                {
                     if (text[i] >= ' ' || text[i] == '\n' || text[i] == '\r' || text[i] == '\t')
                         sb.Append(text[i]);
                     else
                         sb.Append('?');
+                }
+            }
             return sb.ToString();
         }
 
@@ -886,22 +845,6 @@ namespace WpfCameraBarcodeReaderDemo
             }
         }
 
-        /// <summary>
-        /// Handles the Click event of saveImageAsButton object.
-        /// </summary>
-        private void saveImageAsButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_saveRecognizedImageDialog.ShowDialog().Value)
-                try
-                {
-                    _recognizedSourceImage.Save(_saveRecognizedImageDialog.FileName);
-                }
-                catch (Exception ex)
-                {
-                    DemosTools.ShowErrorMessage(ex);
-                }
-        }
-
         #endregion
 
 
@@ -915,11 +858,6 @@ namespace WpfCameraBarcodeReaderDemo
         private void ShowErrorMessage(string message)
         {
             MessageBox.Show(message);
-        }
-
-        private void SetButtonText(Button button, string text)
-        {
-            button.Content = text;
         }
 
         #endregion
