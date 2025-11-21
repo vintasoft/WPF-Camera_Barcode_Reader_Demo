@@ -13,7 +13,7 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>    
     <EnableDefaultItems>false</EnableDefaultItems>
-    <Version>14.1.17.1</Version>
+    <Version>14.1.18.1</Version>
     <AssemblyName>WpfCameraBarcodeReaderDemo</AssemblyName>
     <RootNamespace>WpfCameraBarcodeReaderDemo</RootNamespace>
     <StartupObject>WpfCameraBarcodeReaderDemo.App</StartupObject>
@@ -32,15 +32,15 @@
   
 
   <ItemGroup>
-    <PackageReference Include="Vintasoft.Barcode" Version="15.2.9.1" />
-    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="15.2.9.1" />
-    <PackageReference Include="Vintasoft.Imaging" Version="14.1.17.1" />
-    <PackageReference Include="Vintasoft.Imaging.Gdi" Version="14.1.17.1" />
-    <PackageReference Include="Vintasoft.Imaging.Media" Version="14.1.17.1" />
-    <PackageReference Include="Vintasoft.Imaging.UI" Version="14.1.17.1" />
-    <PackageReference Include="Vintasoft.Imaging.Wpf" Version="14.1.17.1" />
-    <PackageReference Include="Vintasoft.Imaging.Wpf.UI" Version="14.1.17.1" />
-    <PackageReference Include="Vintasoft.Shared" Version="4.6.0.1" />
+    <PackageReference Include="Vintasoft.Barcode" Version="15.3.0.1" />
+    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="15.3.0.1" />
+    <PackageReference Include="Vintasoft.Imaging" Version="14.1.18.1" />
+    <PackageReference Include="Vintasoft.Imaging.Gdi" Version="14.1.18.1" />
+    <PackageReference Include="Vintasoft.Imaging.Media" Version="14.1.18.1" />
+    <PackageReference Include="Vintasoft.Imaging.UI" Version="14.1.18.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf" Version="14.1.18.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf.UI" Version="14.1.18.1" />
+    <PackageReference Include="Vintasoft.Shared" Version="4.6.1.1" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
