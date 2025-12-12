@@ -544,6 +544,7 @@ namespace WpfCameraBarcodeReaderDemo
         {
             supportedFormatsComboBox.Items.Clear();
             ImageCaptureDevice device = (ImageCaptureDevice)camerasComboBox.SelectedItem;
+            _imagingCameraBarcodeScanner.CaptureDevice = device;
             ReadOnlyCollection<ImageCaptureFormat> formats = _imagingCameraBarcodeScanner.CaptureFormats;
             if (device != null && formats != null)
             {

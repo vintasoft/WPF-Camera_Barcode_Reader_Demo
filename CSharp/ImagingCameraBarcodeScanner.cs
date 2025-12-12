@@ -317,22 +317,21 @@ namespace CameraBarcodeReaderDemo
             {
                 List<ImageCaptureFormat> captureFormats = new List<ImageCaptureFormat>();
 
-                List<uint> imageCaptureFormatSizes = new List<uint>();
+                HashSet<string> imageCaptureFormatKeys = new HashSet<string>();
                 for (int i = 0; i < device.SupportedFormats.Count; i++)
                 {
+                    ImageCaptureFormat captureFormat = device.SupportedFormats[i];
+
                     // if format has bit depth less or equal than 12 bit
-                    if (device.SupportedFormats[i].BitsPerPixel <= 12)
-                    {
+                    if (captureFormat.BitsPerPixel <= 12)
                         // ignore formats with bit depth less or equal than 12 bit because they may cause issues on Windows 8
                         continue;
-                    }
-
-                    uint imageCaptureFormatSize = (uint)(device.SupportedFormats[i].Width | (device.SupportedFormats[i].Height << 16));
-                    if (!imageCaptureFormatSizes.Contains(imageCaptureFormatSize))
+                    string imageCaptureFormatKey = captureFormat.Width + "X" + captureFormat.Height + " " + captureFormat.FramesPerSecond;
+                    if (!imageCaptureFormatKeys.Contains(imageCaptureFormatKey))
                     {
-                        imageCaptureFormatSizes.Add(imageCaptureFormatSize);
+                        imageCaptureFormatKeys.Add(imageCaptureFormatKey);
 
-                        captureFormats.Add(device.SupportedFormats[i]);
+                        captureFormats.Add(captureFormat);
                     }
                 }
                 _captureFormats = captureFormats.AsReadOnly();
