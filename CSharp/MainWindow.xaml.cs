@@ -384,7 +384,7 @@ namespace WpfCameraBarcodeReaderDemo
             startImageCapturingButton.IsEnabled = CaptureDevice != null && !isCapturingStarted;
             startImageCapturingMenuItem.IsEnabled = CaptureDevice != null && !isCapturingStarted;
             stopImageCapturingButton.IsEnabled = CaptureDevice != null && isCapturingStarted;
-            startImageCapturingMenuItem.IsEnabled = CaptureDevice != null && isCapturingStarted;
+            stopImageCapturingMenuItem.IsEnabled = CaptureDevice != null && isCapturingStarted;
             configureCameraButton.IsEnabled = CaptureDevice != null;
             configureCameraMenuItem.IsEnabled = CaptureDevice != null;
 
