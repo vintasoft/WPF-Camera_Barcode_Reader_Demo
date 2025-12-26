@@ -85,8 +85,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
-    <PackageReference Include="Vintasoft.Barcode" Version="15.3.3.1" />
-    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="15.3.3.1" />
+    <PackageReference Include="Vintasoft.Barcode" Version="15.3.4.1" />
+    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="15.3.4.1" />
     <PackageReference Include="Vintasoft.Imaging" Version="15.0.0.1" />
     <PackageReference Include="Vintasoft.Imaging.Gdi" Version="15.0.0.1" />
     <PackageReference Include="Vintasoft.Imaging.Media" Version="15.0.0.1" />
