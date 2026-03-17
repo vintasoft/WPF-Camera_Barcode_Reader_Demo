@@ -19,8 +19,8 @@ using Vintasoft.Imaging;
 using Vintasoft.Imaging.Drawing;
 using Vintasoft.Imaging.Media;
 
-using WpfDemosCommonCode;
-using WpfDemosCommonCode.Imaging.Codecs;
+using WpfCommonCode;
+using WpfCommonCode.Imaging.Codecs;
 
 using CameraBarcodeReaderDemo;
 
