@@ -154,7 +154,8 @@ namespace CameraBarcodeReaderDemo
                     if (CaptureDevice.DesiredFormat == null)
                         CaptureDevice.DesiredFormat = CaptureFormats[0];
 
-                    _barcodeScanner.StartScanning();
+                    lock (_barcodeScanner)
+                        _barcodeScanner.StartScanning();
 
                     _imageCaptureSource.CaptureDevice = _captureDevice;
                     _imageCaptureSource.Start();
@@ -178,8 +179,10 @@ namespace CameraBarcodeReaderDemo
             {
                 if (_imageCaptureSource.State != ImageCaptureState.Stopped)
                 {
-                    _barcodeScanner.StopScanning();
                     _imageCaptureSource.Stop();
+
+                    lock (_barcodeScanner)
+                        _barcodeScanner.StopScanning();
 
                     OnScanningStop(EventArgs.Empty);
                 }
@@ -271,13 +274,17 @@ namespace CameraBarcodeReaderDemo
                 // get captured image
                 VintasoftImage image = e.GetCapturedImage();
 
-                // recognize barcodes from captured image
-                using (VintasoftBitmap bitmap = image.GetAsVintasoftBitmap())
-                    _barcodeScanner.ScanFrame(bitmap);
-
                 // if image capturing is started
                 if (_imageCaptureSource.State == ImageCaptureState.Started)
                 {
+                    // recognize barcodes from captured image
+                    using (VintasoftBitmap bitmap = image.GetAsVintasoftBitmap())
+                    {
+                        // if scanning started
+                        if (_barcodeScanner.IsScanningStarted)
+                            _barcodeScanner.ScanFrame(bitmap);
+                    }
+
                     // capture next image 
                     _imageCaptureSource.CaptureAsync();
                 }
