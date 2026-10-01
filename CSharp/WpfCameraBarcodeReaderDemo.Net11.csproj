@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net11.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
@@ -13,7 +13,7 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>    
     <EnableDefaultItems>false</EnableDefaultItems>
-    <Version>15.1.9.1</Version>
+    <Version>15.2.0.1</Version>
     <AssemblyName>WpfCameraBarcodeReaderDemo</AssemblyName>
     <RootNamespace>WpfCameraBarcodeReaderDemo</RootNamespace>
     <StartupObject>WpfCameraBarcodeReaderDemo.App</StartupObject>
@@ -32,15 +32,15 @@
   
 
   <ItemGroup>
-    <PackageReference Include="Vintasoft.Barcode" Version="16.0.7.1" />
-    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="16.0.7.1" />
-    <PackageReference Include="Vintasoft.Imaging" Version="15.1.9.1" />
-    <PackageReference Include="Vintasoft.Imaging.Gdi" Version="15.1.9.1" />
-    <PackageReference Include="Vintasoft.Imaging.Media" Version="15.1.9.1" />
-    <PackageReference Include="Vintasoft.Imaging.UI" Version="15.1.9.1" />
-    <PackageReference Include="Vintasoft.Imaging.Wpf" Version="15.1.9.1" />
-    <PackageReference Include="Vintasoft.Imaging.Wpf.UI" Version="15.1.9.1" />
-    <PackageReference Include="Vintasoft.Shared" Version="4.6.3.1" />
+    <PackageReference Include="Vintasoft.Barcode" Version="16.1.0.1" />
+    <PackageReference Include="Vintasoft.Barcode.Wpf" Version="16.1.0.1" />
+    <PackageReference Include="Vintasoft.Imaging" Version="15.2.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Gdi" Version="15.2.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Media" Version="15.2.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.UI" Version="15.2.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf" Version="15.2.0.1" />
+    <PackageReference Include="Vintasoft.Imaging.Wpf.UI" Version="15.2.0.1" />
+    <PackageReference Include="Vintasoft.Shared" Version="4.7.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
